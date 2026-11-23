@@ -1,6 +1,28 @@
 # LocalSend
 
-> **Unofficial HarmonyOS PC fork.** This branch adapts LocalSend v1.18.2 for ARM64 HarmonyOS PC/2-in-1 devices. See the [build instructions and device test results](app/ohos/README.md).
+> **非官方鸿蒙 PC 移植版 / Unofficial HarmonyOS PC port**
+>
+> 基于 LocalSend v1.18.2，面向 ARM64 鸿蒙电脑（PC/2-in-1）。
+>
+> Based on LocalSend v1.18.2 for ARM64 HarmonyOS PC/2-in-1 devices.
+
+## 鸿蒙 PC 移植贡献 / HarmonyOS PC port contributions
+
+### 中文
+
+- **平台适配。** 沿用 LocalSend 原版的 Flutter 界面和 Rust 传输核心，新增鸿蒙 PC 的 ARM64 构建、系统文件与文件夹选择、公共收件目录授权及重启恢复、拖放、剪贴板和系统托盘。
+- **真机验证。** 在运行 OpenHarmony 6.1.1.135 的鸿蒙电脑上通过 USB 安装和调试。通过局域网 HTTPS 接收测试文件，再将目录发回 Mac 上的协议测试程序。回传的 50 个文件包含一个 128 MiB 文件及其编号副本，逐一核对了相对路径、字节数和 SHA-256。
+- **人员与 AI 参与。** [@maopai](https://github.com/maopai) 发起移植、确定适配目标、开启 USB 调试，并在实体电脑上亲自验证了消息框的键盘输入。Codex 协助编写了大部分鸿蒙平台集成和构建脚本，参与故障排查、自动化验证和文档编写。
+
+[构建说明与真机测试记录](app/ohos/README.md)
+
+### English
+
+- **Platform support.** The port keeps LocalSend’s Flutter UI and Rust transfer core and adds an ARM64 HarmonyOS PC build, native file and folder pickers, public receive-folder access across restarts, drag and drop, clipboard support, and system tray integration.
+- **Hardware verification.** We installed and debugged the app over USB on a HarmonyOS PC running OpenHarmony 6.1.1.135. A local-network HTTPS round trip with a protocol test peer on a Mac verified the relative paths, byte counts, and SHA-256 hashes of all 50 files, including a 128 MiB file and its numbered copy.
+- **Human and AI contributions.** [@maopai](https://github.com/maopai) initiated the port, set its goals, enabled USB debugging, and personally verified physical-keyboard input in the message dialog. Codex helped write much of the HarmonyOS integration and build tooling, troubleshoot issues, run automated checks, and prepare documentation.
+
+[Build instructions and device test results](app/ohos/README.md)
 
 [![CI status][ci-badge]][ci-workflow]
 [![Translations][translate-badge]][translate-link]
