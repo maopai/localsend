@@ -1,3 +1,5 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:collection/collection.dart';
@@ -23,6 +25,7 @@ import 'package:localsend_app/provider/selection/selected_receiving_files_provid
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/util/native/directories.dart';
+import 'package:localsend_app/util/native/harmony_documents.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/native/tray_helper.dart';
 import 'package:localsend_app/widget/dialogs/open_file_dialog.dart';
@@ -76,7 +79,8 @@ class ReceiveController {
     }
 
     final settings = server.ref.read(settingsProvider);
-    final destinationDir = settings.destination ?? await getDefaultDestinationDirectory();
+    final storedDestination = settings.destination;
+    final destinationDir = storedDestination == null ? await getDefaultDestinationDirectory() : destinationDisplayPath(storedDestination);
     final cacheDir = await getCacheDirectory();
     final sessionId = event.sessionId;
     final files = {
@@ -157,7 +161,14 @@ class ReceiveController {
       return;
     }
 
-    if (checkPlatformHasTray() && (await windowManager.isMinimized() || !(await windowManager.isVisible()) || !(await windowManager.isFocused()))) {
+    if (checkPlatformIsHarmonyOS()) {
+      try {
+        await showFromTray();
+      } catch (e) {
+        _logger.warning('Could not show the receive window', e);
+      }
+    } else if (checkPlatformHasTray() &&
+        (await windowManager.isMinimized() || !(await windowManager.isVisible()) || !(await windowManager.isFocused()))) {
       await showFromTray();
     }
 

@@ -1,3 +1,5 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:async';
 import 'dart:io';
 
@@ -33,6 +35,7 @@ import 'package:localsend_app/util/native/channel/android_channel.dart';
 import 'package:localsend_app/util/native/context_menu_helper.dart';
 import 'package:localsend_app/util/native/cross_file_converters.dart';
 import 'package:localsend_app/util/native/device_info_helper.dart';
+import 'package:localsend_app/util/native/harmony_documents.dart';
 import 'package:localsend_app/util/native/macos_channel.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/native/tray_helper.dart';
@@ -44,7 +47,7 @@ import 'package:localsend_isolates/isolate.dart';
 import 'package:localsend_isolates/model/dto/file_dto.dart';
 import 'package:localsend_isolates/model/dto/multicast_dto.dart';
 import 'package:localsend_isolates/rust/api/logging.dart' as rust_logging;
-import 'package:localsend_isolates/rust/frb_generated.dart';
+import 'package:localsend_isolates/rust/init.dart';
 import 'package:localsend_isolates/util/logger.dart';
 import 'package:localsend_isolates/util/show_instance.dart';
 import 'package:localsend_isolates/util/transfer_notification.dart';
@@ -64,7 +67,7 @@ Future<RefenaContainer> preInit(List<String> args) async {
   initLogger(args.contains('-v') || args.contains('--verbose') ? Level.ALL : Level.INFO);
   MapperContainer.globals.use(const FileDtoMapper());
 
-  await RustLib.init();
+  await initializeRustBridge();
 
   if (kDebugMode) {
     try {
@@ -79,6 +82,19 @@ Future<RefenaContainer> preInit(List<String> args) async {
   final persistenceService = await PersistenceService.initialize(
     supportsDynamicColors: dynamicColors != null,
   );
+
+  if (checkPlatformIsHarmonyOS()) {
+    try {
+      await activateHarmonyDestination(persistenceService.getDestination());
+    } catch (e) {
+      _logger.warning('Could not restore receive directory access', e);
+    }
+    try {
+      await harmonyDocuments.invokeMethod<void>('clearStaleSelections');
+    } catch (e) {
+      _logger.warning('Could not clear previous file selections', e);
+    }
+  }
 
   if (persistenceService.isFirstAppStart && !persistenceService.isPortableMode()) {
     await enableContextMenu();
@@ -185,6 +201,10 @@ StreamSubscription? _sharedMediaSubscription;
 /// Will be called when home page has been initialized
 Future<void> postInit(BuildContext context, Ref ref, bool appStart) async {
   await updateSystemOverlayStyle(context);
+
+  if (appStart && checkPlatformIsHarmonyOS()) {
+    await initHarmonyTray(ref.read(settingsProvider).minimizeToTray);
+  }
 
   if (checkPlatform([TargetPlatform.android])) {
     try {

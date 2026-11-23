@@ -1,5 +1,7 @@
 # LocalSend
 
+> **Unofficial HarmonyOS PC fork.** This branch adapts LocalSend v1.18.2 for ARM64 HarmonyOS PC/2-in-1 devices. See the [build instructions and device test results](app/ohos/README.md).
+
 [![CI status][ci-badge]][ci-workflow]
 [![Translations][translate-badge]][translate-link]
 [![Packaging status][packaging-badge]][packaging-link]

@@ -1,5 +1,8 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_isolates/model/device.dart';
 import 'package:localsend_isolates/model/device_info_result.dart';
 // ignore: implementation_imports
@@ -26,7 +29,7 @@ Future<DeviceInfoResult> getDeviceInfo() async {
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
-      case TargetPlatform.fuchsia:
+      default:
         deviceType = DeviceType.desktop;
         break;
     }
@@ -50,8 +53,8 @@ Future<DeviceInfoResult> getDeviceInfo() async {
       case TargetPlatform.windows:
         deviceModel = 'Windows';
         break;
-      case TargetPlatform.fuchsia:
-        deviceModel = 'Fuchsia';
+      default:
+        deviceModel = checkPlatformIsHarmonyOS() ? 'HarmonyOS PC' : 'Fuchsia';
         break;
     }
   }

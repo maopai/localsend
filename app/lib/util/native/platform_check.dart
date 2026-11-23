@@ -1,3 +1,5 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 
@@ -10,6 +12,11 @@ bool checkPlatform(List<TargetPlatform> platforms, {bool web = false}) {
 
 bool checkPlatformIsNot(List<TargetPlatform> platforms, {bool web = false}) {
   return !checkPlatform(platforms, web: web);
+}
+
+bool checkPlatformIsHarmonyOS() {
+  // The standard Flutter SDK does not declare the OpenHarmony enum value.
+  return !kIsWeb && defaultTargetPlatform.name == 'ohos';
 }
 
 /// This platform runs on a "traditional" computer
@@ -29,7 +36,8 @@ bool checkPlatformCanReceiveShareIntent() {
 
 /// This platform can select folders
 bool checkPlatformWithFolderSelect() {
-  return checkPlatform([TargetPlatform.android, TargetPlatform.iOS, TargetPlatform.linux, TargetPlatform.windows, TargetPlatform.macOS]);
+  return checkPlatformIsHarmonyOS() ||
+      checkPlatform([TargetPlatform.android, TargetPlatform.iOS, TargetPlatform.linux, TargetPlatform.windows, TargetPlatform.macOS]);
 }
 
 /// This platform has a gallery
@@ -40,7 +48,7 @@ bool checkPlatformWithGallery() {
 /// This platform has access to file system
 /// On android, do not allow to change
 bool checkPlatformWithFileSystem() {
-  return checkPlatform([TargetPlatform.linux, TargetPlatform.windows, TargetPlatform.android, TargetPlatform.macOS]);
+  return checkPlatformIsHarmonyOS() || checkPlatform([TargetPlatform.linux, TargetPlatform.windows, TargetPlatform.android, TargetPlatform.macOS]);
 }
 
 /// Convenience function to check if the app is not running on a Linux device with the Wayland display manager

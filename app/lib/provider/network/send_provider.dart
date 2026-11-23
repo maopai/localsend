@@ -1,3 +1,5 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -32,7 +34,6 @@ import 'package:logging/logging.dart';
 import 'package:refena_flutter/addons.dart';
 import 'package:refena_flutter/refena_flutter.dart';
 import 'package:routerino/routerino.dart';
-import 'package:uri_content/uri_content.dart';
 import 'package:uuid/uuid.dart';
 
 const _uuid = Uuid();
@@ -537,8 +538,6 @@ class SendNotifier extends Notifier<Map<String, SendSessionState>> {
       }
     }
   }
-
-  final uriContent = UriContent();
 
   /// Sends a single file. Currently only used to retry a failed file.
   Future<void> sendFile({

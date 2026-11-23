@@ -1,6 +1,8 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:async';
 
-import 'package:localsend_isolates/rust/frb_generated.dart';
+import 'package:localsend_isolates/rust/init.dart';
 import 'package:localsend_isolates/src/isolate/child/sync_provider.dart';
 import 'package:localsend_isolates/src/isolate/dto/send_to_isolate_data.dart';
 import 'package:localsend_isolates/util/logger.dart';
@@ -52,7 +54,7 @@ Future<void> setupChildIsolateHelper<S, R>({
         ),
       );
 
-      await RustLib.init();
+      await initializeRustBridge();
 
       if (init != null) {
         await init(_isolateContainer);

@@ -1,5 +1,8 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'package:flutter/foundation.dart';
 import 'package:localsend_app/util/native/channel/android_channel.dart' as android_channel;
+import 'package:localsend_app/util/native/harmony_documents.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:logging/logging.dart';
 import 'package:open_dir/open_dir.dart';
@@ -12,6 +15,15 @@ Future<void> openFolder({
   required String folderPath,
   String? fileName,
 }) async {
+  if (checkPlatformIsHarmonyOS()) {
+    try {
+      await harmonyDocuments.invokeMethod<void>('openFolder', folderPath);
+    } catch (e) {
+      _logger.warning('Could not open receive folder', e);
+    }
+    return;
+  }
+
   if (folderPath.startsWith('content://')) {
     await android_channel.openContentUri(uri: folderPath);
     return;

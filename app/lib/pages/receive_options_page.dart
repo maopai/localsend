@@ -1,3 +1,5 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'package:flutter/material.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/pages/receive_page.dart';
@@ -9,6 +11,7 @@ import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/widget/custom_dropdown_button.dart';
 import 'package:localsend_app/widget/custom_icon_button.dart';
 import 'package:localsend_app/widget/dialogs/file_name_input_dialog.dart';
+import 'package:localsend_app/widget/dialogs/no_permission_dialog.dart';
 import 'package:localsend_app/widget/dialogs/quick_actions_dialog.dart';
 import 'package:localsend_app/widget/responsive_list_view.dart';
 import 'package:localsend_isolates/util/file_size_helper.dart';
@@ -51,9 +54,15 @@ class ReceiveOptionsPage extends StatelessWidget {
                         padding: const EdgeInsets.only(left: 10),
                         child: CustomIconButton(
                           onPressed: () async {
-                            final directory = await pickDirectoryPath();
-                            if (directory != null) {
-                              ref.notifier(serverProvider).setSessionDestinationDir(directory);
+                            try {
+                              final directory = await pickDirectoryPath();
+                              if (directory != null) {
+                                ref.notifier(serverProvider).setSessionDestinationDir(directory);
+                              }
+                            } catch (_) {
+                              if (context.mounted) {
+                                await showDialog(context: context, builder: (_) => const NoPermissionDialog());
+                              }
                             }
                           },
                           child: const Icon(Icons.edit),

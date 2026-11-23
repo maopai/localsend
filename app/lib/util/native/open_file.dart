@@ -1,5 +1,8 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'package:flutter/material.dart';
 import 'package:localsend_app/util/native/channel/android_channel.dart' as android_channel;
+import 'package:localsend_app/util/native/harmony_documents.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/widget/dialogs/cannot_open_file_dialog.dart';
 import 'package:localsend_isolates/model/file_type.dart';
@@ -13,6 +16,17 @@ Future<void> openFile(
   String filePath, {
   void Function()? onDeleteTap,
 }) async {
+  if (checkPlatformIsHarmonyOS()) {
+    try {
+      await harmonyDocuments.invokeMethod<void>('openFile', filePath);
+    } catch (_) {
+      if (context.mounted) {
+        await CannotOpenFileDialog.open(context, filePath, onDeleteTap);
+      }
+    }
+    return;
+  }
+
   if ((fileType == FileType.apk || filePath.toLowerCase().endsWith('.apk')) && checkPlatform([TargetPlatform.android])) {
     await Permission.requestInstallPackages.request();
   }

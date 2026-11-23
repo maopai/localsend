@@ -1,3 +1,5 @@
+# Modified for HarmonyOS PC in this fork.
+
 [workspace]
 resolver = "3"
 members = [
@@ -6,6 +8,10 @@ members = [
     "packages/localsend_isolates/rust",
     "server",
 ]
+
+[patch.crates-io]
+# WebRTC's interface enumeration needs an OHOS-aware nix on that target.
+webrtc-util = { path = "third_party/webrtc-util" }
 
 # Profiles are only honored in the workspace root manifest.
 

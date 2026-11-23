@@ -1,3 +1,5 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,6 +10,7 @@ import 'package:localsend_app/pages/receive_page.dart';
 import 'package:localsend_app/provider/receive_history_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/util/native/directories.dart';
+import 'package:localsend_app/util/native/harmony_documents.dart';
 import 'package:localsend_app/util/native/open_file.dart';
 import 'package:localsend_app/util/native/open_folder.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
@@ -86,7 +89,7 @@ class ReceiveHistoryPage extends StatelessWidget {
                       : () async {
                           // ignore: use_build_context_synchronously
                           final destination = context.read(settingsProvider).destination ?? await getDefaultDestinationDirectory();
-                          await openFolder(folderPath: destination);
+                          await openFolder(folderPath: destinationDisplayPath(destination));
                         },
                   icon: const Icon(Icons.folder),
                   label: Text(t.receiveHistoryPage.openFolder),

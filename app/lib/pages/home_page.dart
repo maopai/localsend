@@ -1,7 +1,10 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:localsend_app/config/init.dart';
 import 'package:localsend_app/config/theme.dart';
 import 'package:localsend_app/gen/strings.g.dart';
@@ -11,6 +14,9 @@ import 'package:localsend_app/pages/tabs/send_tab.dart';
 import 'package:localsend_app/pages/tabs/settings_tab.dart';
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_app/util/native/cross_file_converters.dart';
+import 'package:localsend_app/util/native/harmony_documents.dart';
+import 'package:localsend_app/util/native/platform_check.dart';
+import 'package:localsend_app/widget/dialogs/no_permission_dialog.dart';
 import 'package:localsend_app/widget/responsive_builder.dart';
 import 'package:refena_flutter/refena_flutter.dart';
 
@@ -54,16 +60,53 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with Refena {
+  static const _harmonyDrop = MethodChannel('org.localsend.localsend_app/harmony_drop');
   bool _dragAndDropIndicator = false;
 
   @override
   void initState() {
     super.initState();
 
+    if (checkPlatformIsHarmonyOS()) {
+      _harmonyDrop.setMethodCallHandler(_onHarmonyDropEvent);
+    }
+
     ensureRef((ref) async {
       ref.redux(homePageControllerProvider).dispatch(ChangeTabAction(widget.initialTab));
       await postInit(context, ref, widget.appStart);
     });
+  }
+
+  @override
+  void dispose() {
+    if (checkPlatformIsHarmonyOS()) {
+      _harmonyDrop.setMethodCallHandler(null);
+    }
+    super.dispose();
+  }
+
+  Future<void> _onHarmonyDropEvent(MethodCall call) async {
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    try {
+      switch (call.method) {
+        case 'dragEntered':
+        case 'dragExited':
+          setState(() => _dragAndDropIndicator = call.method == 'dragEntered');
+        case 'documentsDropped':
+          final added = await addHarmonyDocuments(ref, call.arguments as Map<Object?, Object?>);
+          if (mounted && added) {
+            ref.redux(homePageControllerProvider).dispatch(ChangeTabAction(HomeTab.send));
+          }
+        case 'dropFailed':
+          await showDialog(context: context, builder: (_) => const NoPermissionDialog());
+      }
+    } catch (_) {
+      if (mounted) {
+        await showDialog(context: context, builder: (_) => const NoPermissionDialog());
+      }
+    }
   }
 
   @override

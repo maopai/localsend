@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "LocalSend 文件传输"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "LocalSend 鸿蒙电脑版"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "LocalSend"
+    }
+  ]
+}

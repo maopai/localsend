@@ -1,3 +1,5 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'package:flutter/foundation.dart';
 
 extension TargetPlatformExt on TargetPlatform {
@@ -5,8 +7,6 @@ extension TargetPlatformExt on TargetPlatform {
     switch (this) {
       case TargetPlatform.android:
         return 'Android';
-      case TargetPlatform.fuchsia:
-        return 'Fuchsia';
       case TargetPlatform.iOS:
         return 'iOS';
       case TargetPlatform.linux:
@@ -15,6 +15,8 @@ extension TargetPlatformExt on TargetPlatform {
         return 'macOS';
       case TargetPlatform.windows:
         return 'Windows';
+      default:
+        return name == 'ohos' ? 'HarmonyOS' : '${name[0].toUpperCase()}${name.substring(1)}';
     }
   }
 }

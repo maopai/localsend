@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "LocalSend file sharing"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "LocalSend for HarmonyOS PC"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "LocalSend"
+    }
+  ]
+}

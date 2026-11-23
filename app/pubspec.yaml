@@ -1,3 +1,5 @@
+# Modified for HarmonyOS PC in this fork.
+
 name: localsend_app
 description: An open source cross-platform alternative to AirDrop
 homepage: https://localsend.org/
@@ -49,6 +51,11 @@ dependencies:
   pasteboard: 0.3.0
   path: 1.9.1
   path_provider: 2.1.6
+  path_provider_ohos:
+    git:
+      url: https://atomgit.com/CPF-Flutter/flutter_packages.git
+      ref: bddb2c981fcf826eaf19ed97f55113708aa55727
+      path: packages/path_provider/path_provider_ohos
   path_provider_foundation: 2.6.0
   permission_handler: 12.0.3
   pretty_qr_code: 3.6.0
@@ -58,6 +65,11 @@ dependencies:
   screen_retriever: 0.2.2
   share_handler: 0.0.22
   shared_preferences: 2.5.5
+  shared_preferences_ohos:
+    git:
+      url: https://atomgit.com/CPF-Flutter/flutter_packages.git
+      ref: bddb2c981fcf826eaf19ed97f55113708aa55727
+      path: packages/shared_preferences/shared_preferences_ohos
   shared_preferences_platform_interface: any
   slang: 4.19.0
   slang_flutter: 4.19.0
@@ -65,6 +77,11 @@ dependencies:
   tray_manager: 0.5.3
   uri_content: 3.1.1
   url_launcher: 6.3.2
+  url_launcher_ohos:
+    git:
+      url: https://atomgit.com/CPF-Flutter/flutter_packages.git
+      ref: bddb2c981fcf826eaf19ed97f55113708aa55727
+      path: packages/url_launcher/url_launcher_ohos
   uuid: 4.6.0
   wakelock_plus: 1.5.2
   wechat_assets_picker: 10.1.3
@@ -85,6 +102,9 @@ dev_dependencies:
   test: ^1.30.0
 
 dependency_overrides:
+  flex_color_picker:
+    # Match the OpenHarmony SDK's additional platform enum value.
+    path: ../third_party/flex_color_picker
   device_apps:
     # Migrate to another maintained package to fetch installed apps on Android
     git:

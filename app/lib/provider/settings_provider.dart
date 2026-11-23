@@ -1,3 +1,5 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:localsend_app/gen/strings.g.dart';
@@ -6,8 +8,10 @@ import 'package:localsend_app/model/persistence/quick_save_mode.dart';
 import 'package:localsend_app/model/send_mode.dart';
 import 'package:localsend_app/model/state/settings_state.dart';
 import 'package:localsend_app/provider/persistence_provider.dart';
+import 'package:localsend_app/util/native/tray_helper.dart';
 import 'package:localsend_isolates/isolate.dart';
 import 'package:localsend_isolates/model/device.dart';
+
 import 'package:refena_flutter/refena_flutter.dart';
 
 final _listEq = const ListEquality().equals;
@@ -220,6 +224,7 @@ class SettingsService extends PureNotifier<SettingsState> {
   }
 
   Future<void> setMinimizeToTray(bool minimizeToTray) async {
+    await updateHarmonyMinimizeOnClose(minimizeToTray);
     await _persistence.setMinimizeToTray(minimizeToTray);
     state = state.copyWith(
       minimizeToTray: minimizeToTray,

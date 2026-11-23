@@ -1,3 +1,5 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -16,11 +18,13 @@ import 'package:localsend_app/provider/version_provider.dart';
 import 'package:localsend_app/util/alias_generator.dart';
 import 'package:localsend_app/util/device_type_ext.dart';
 import 'package:localsend_app/util/i18n.dart';
+import 'package:localsend_app/util/native/harmony_documents.dart';
 import 'package:localsend_app/util/native/macos_channel.dart';
 import 'package:localsend_app/util/native/pick_directory_path.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/widget/custom_dropdown_button.dart';
 import 'package:localsend_app/widget/dialogs/encryption_disabled_notice.dart';
+import 'package:localsend_app/widget/dialogs/no_permission_dialog.dart';
 import 'package:localsend_app/widget/dialogs/pin_dialog.dart';
 import 'package:localsend_app/widget/dialogs/quick_save_from_favorites_notice.dart';
 import 'package:localsend_app/widget/dialogs/quick_save_notice.dart';
@@ -88,9 +92,9 @@ class SettingsTab extends StatelessWidget {
                   buttonLabel: vm.settings.locale?.getLocaleName() ?? t.settingsTab.general.languageOptions.system,
                   onTap: () => vm.onTapLanguage(context),
                 ),
-                if (checkPlatformIsDesktop()) ...[
+                if (checkPlatformIsDesktop() || checkPlatformIsHarmonyOS()) ...[
                   /// Wayland does window position handling, so there's no need for it. See [https://github.com/localsend/localsend/issues/544]
-                  if (vm.advanced && checkPlatformIsNotWaylandDesktop())
+                  if (checkPlatformIsDesktop() && vm.advanced && checkPlatformIsNotWaylandDesktop())
                     _BooleanEntry(
                       label: defaultTargetPlatform == TargetPlatform.windows
                           ? t.settingsTab.general.saveWindowPlacementWindows
@@ -100,7 +104,7 @@ class SettingsTab extends StatelessWidget {
                         await ref.notifier(settingsProvider).setSaveWindowPlacement(b);
                       },
                     ),
-                  if (checkPlatformHasTray()) ...[
+                  if (checkPlatformHasTray() || checkPlatformIsHarmonyOS()) ...[
                     _BooleanEntry(
                       label: t.settingsTab.general.minimizeToTray,
                       value: vm.settings.minimizeToTray,
@@ -215,25 +219,38 @@ class SettingsTab extends StatelessWidget {
                         foregroundColor: Theme.of(context).colorScheme.onSurface,
                       ),
                       onPressed: () async {
-                        if (vm.settings.destination != null) {
-                          await ref.notifier(settingsProvider).setDestination(null);
-                          if (defaultTargetPlatform == TargetPlatform.macOS) {
-                            await removeExistingDestinationAccess();
+                        try {
+                          final previous = vm.settings.destination;
+                          if (previous != null) {
+                            await ref.notifier(settingsProvider).setDestination(null);
+                            if (defaultTargetPlatform == TargetPlatform.macOS) {
+                              await removeExistingDestinationAccess();
+                            }
+                            await forgetHarmonyDestination(previous);
+                            return;
                           }
-                          return;
-                        }
 
-                        final directory = await pickDirectoryPath();
-                        if (directory != null) {
-                          if (defaultTargetPlatform == TargetPlatform.macOS) {
-                            await persistDestinationFolderAccess(directory);
+                          final directory = await pickDirectoryPath(persist: true);
+                          if (directory != null) {
+                            if (defaultTargetPlatform == TargetPlatform.macOS) {
+                              await persistDestinationFolderAccess(directory);
+                            }
+                            await ref.notifier(settingsProvider).setDestination(directory);
                           }
-                          await ref.notifier(settingsProvider).setDestination(directory);
+                        } catch (_) {
+                          if (context.mounted) {
+                            await showDialog(context: context, builder: (_) => const NoPermissionDialog());
+                          }
                         }
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Text(vm.settings.destination ?? t.settingsTab.receive.downloads, style: Theme.of(context).textTheme.titleMedium),
+                        child: Text(
+                          vm.settings.destination != null
+                              ? destinationDisplayPath(vm.settings.destination!)
+                              : (checkPlatformIsHarmonyOS() ? t.receiveOptionsPage.appDirectory : t.settingsTab.receive.downloads),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                       ),
                     ),
                   ),

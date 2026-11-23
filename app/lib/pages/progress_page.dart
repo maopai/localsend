@@ -1,8 +1,10 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:localsend_app/config/theme.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/model/state/server/receive_session_state.dart';
@@ -34,6 +36,7 @@ import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 /// Extra space needed below the file list while the progress details are expanded.
 const _advancedProgressPanelExtraPadding = 100.0;
+const _harmonyWindow = MethodChannel('org.localsend.localsend_app/harmony_window');
 
 class ProgressPage extends StatefulWidget {
   final bool showAppBar;
@@ -69,6 +72,18 @@ class _ProgressPageState extends State<ProgressPage> with Refena {
   /// so there is no reason to also keep the screen on.
   bool get _useWakelock => checkPlatformIsNot([TargetPlatform.android]);
 
+  Future<void> _keepScreenOn(bool enable) async {
+    try {
+      if (checkPlatformIsHarmonyOS()) {
+        await _harmonyWindow.invokeMethod<void>('keepScreenOn', enable);
+      } else {
+        await WakelockPlus.toggle(enable: enable);
+      }
+    } catch (_) {
+      // Screen wake is optional because it can be denied by the platform.
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -76,9 +91,7 @@ class _ProgressPageState extends State<ProgressPage> with Refena {
     // init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_useWakelock) {
-        try {
-          unawaited(WakelockPlus.enable());
-        } catch (_) {}
+        unawaited(_keepScreenOn(true));
 
         // Poll for completion and disable the wakelock once.
         // We must NOT call WakelockPlus.enable() repeatedly here: on Linux (FreeDesktop D-Bus ScreenSaver)
@@ -89,9 +102,7 @@ class _ProgressPageState extends State<ProgressPage> with Refena {
           final finished = ref.read(fileTransferProvider).getStatuses(widget.sessionId).isFinishedOrSkipped;
           if (finished) {
             timer.cancel();
-            try {
-              unawaited(WakelockPlus.disable());
-            } catch (_) {}
+            unawaited(_keepScreenOn(false));
           }
         });
       }
@@ -185,9 +196,7 @@ class _ProgressPageState extends State<ProgressPage> with Refena {
     _wakelockPlusTimer?.cancel();
     TaskbarHelper.clearProgressBar(); // ignore: discarded_futures
     if (_useWakelock) {
-      try {
-        WakelockPlus.disable(); // ignore: discarded_futures
-      } catch (_) {}
+      unawaited(_keepScreenOn(false));
     }
   }
 

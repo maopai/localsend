@@ -1,3 +1,5 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
@@ -14,6 +16,7 @@ import 'package:localsend_app/util/determine_image_type.dart';
 import 'package:localsend_app/util/image_converter.dart';
 import 'package:localsend_app/util/native/channel/android_channel.dart' as android_channel;
 import 'package:localsend_app/util/native/cross_file_converters.dart';
+import 'package:localsend_app/util/native/harmony_documents.dart';
 import 'package:localsend_app/util/native/pick_directory_path.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/ui/asset_picker_translated_text_delegate.dart';
@@ -144,8 +147,8 @@ class PickFileAction extends AsyncGlobalAction {
 }
 
 Future<void> _pickFiles(BuildContext context, Ref ref) async {
-  if (checkPlatform([TargetPlatform.android])) {
-    // On android, the files are copied to the cache which takes some time.
+  if (checkPlatform([TargetPlatform.android]) || checkPlatformIsHarmonyOS()) {
+    // Android and HarmonyOS may copy selected files to the app cache.
     // ignore: unawaited_futures
     showDialog(
       context: context,
@@ -167,7 +170,9 @@ Future<void> _pickFiles(BuildContext context, Ref ref) async {
             );
       }
     } else {
-      final result = await openFiles();
+      final result = checkPlatformIsHarmonyOS()
+          ? (await harmonyDocuments.invokeListMethod<String>('pickFiles') ?? []).map(XFile.new).toList()
+          : await openFiles();
       await ref
           .redux(selectedSendingFilesProvider)
           .dispatchAsync(
@@ -290,13 +295,30 @@ Future<void> _pickText(BuildContext context, Ref ref) async {
 }
 
 Future<void> _pickClipboard(BuildContext context, Ref ref) async {
-  final data = await Clipboard.getData(Clipboard.kTextPlain);
-  if (data?.text != null) {
-    ref.redux(selectedSendingFilesProvider).dispatch(AddMessageAction(message: data!.text!));
+  final Map<Object?, Object?>? harmonySelection;
+  if (checkPlatformIsHarmonyOS()) {
+    try {
+      harmonySelection = await const MethodChannel('org.localsend.localsend_app/harmony_window').invokeMapMethod('pickClipboard', t.general.cancel);
+    } on PlatformException catch (e) {
+      _logger.warning('Failed to read clipboard', e);
+      if (context.mounted) {
+        await showDialog(context: context, builder: (_) => const NoPermissionDialog());
+      }
+      return;
+    }
+    if (harmonySelection == null) {
+      return;
+    }
+  } else {
+    harmonySelection = null;
+  }
+  final text = harmonySelection != null ? (harmonySelection['text'] as String?) : (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+  if (text != null) {
+    ref.redux(selectedSendingFilesProvider).dispatch(AddMessageAction(message: text));
     return;
   }
 
-  final image = await Pasteboard.image;
+  final image = harmonySelection != null ? (harmonySelection['image'] as Uint8List?) : await Pasteboard.image;
   if (image != null) {
     // Adding temporary variable because Dart analyzer somehow doesn't properly downcast Uint8List? to Uint8List
     Uint8List currImage = image;
@@ -328,7 +350,11 @@ Future<void> _pickClipboard(BuildContext context, Ref ref) async {
     return;
   }
 
-  final List<String> files = await Pasteboard.files();
+  if (harmonySelection != null && await addHarmonyDocuments(ref, harmonySelection)) {
+    return;
+  }
+
+  final List<String> files = harmonySelection != null ? const [] : await Pasteboard.files();
   if (files.isNotEmpty) {
     await ref
         .redux(selectedSendingFilesProvider)

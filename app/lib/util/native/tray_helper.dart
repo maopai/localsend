@@ -1,6 +1,9 @@
+// Modified for HarmonyOS PC in this fork.
+
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:localsend_app/gen/assets.gen.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/provider/animation_provider.dart';
@@ -11,6 +14,21 @@ import 'package:tray_manager/tray_manager.dart' as tm;
 import 'package:window_manager/window_manager.dart';
 
 final _logger = Logger('TrayHelper');
+const _harmonyWindow = MethodChannel('org.localsend.localsend_app/harmony_window');
+
+Future<void> initHarmonyTray(bool minimizeOnClose) async {
+  try {
+    await _harmonyWindow.invokeMethod<void>('initTray', {'open': t.tray.open, 'close': t.tray.close, 'minimizeOnClose': minimizeOnClose});
+  } on PlatformException catch (e) {
+    _logger.warning('Failed to set up system tray', e);
+  }
+}
+
+Future<void> updateHarmonyMinimizeOnClose(bool enabled) async {
+  if (checkPlatformIsHarmonyOS()) {
+    await _harmonyWindow.invokeMethod<void>('setMinimizeOnClose', enabled);
+  }
+}
 
 enum TrayEntry {
   open,
@@ -79,8 +97,12 @@ Future<void> hideToTray() async {
 }
 
 Future<void> showFromTray() async {
-  await windowManager.show();
-  await windowManager.focus();
+  if (checkPlatformIsHarmonyOS()) {
+    await _harmonyWindow.invokeMethod<void>('showWindow');
+  } else {
+    await windowManager.show();
+    await windowManager.focus();
+  }
   if (checkPlatform([TargetPlatform.macOS])) {
     // This will crash on Windows
     // https://github.com/localsend/localsend/issues/32
